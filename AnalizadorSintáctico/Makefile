@@ -12,5 +12,5 @@ clean:
 	rm analizador.tab.c
 	rm analizador.tab.h
 	rm analizador
-	clear 
+	clear
 
