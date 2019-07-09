@@ -1,0 +1,557 @@
+\documentclass[spanish]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[english]{babel}
+\usepackage{multirow}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{enumerate}
+\usepackage{lmodern}
+\usepackage[T1]{fontenc}
+\usepackage{mathtools}
+\usepackage[usenames,dvipsnames]{xcolor}
+\usepackage{graphicx}
+\usepackage{lscape} 
+\usepackage{pdflscape}
+
+\usepackage{pdfpages}
+
+\evensidemargin=0.2in     %
+\oddsidemargin=0.2in      %
+\textwidth=6.1in          %
+
+\usepackage{fancyvrb}
+\usepackage{listings}
+\usepackage{fancybox}
+\usepackage{listings}
+\usepackage{cite}
+\definecolor{light-gray}{gray}{0.85}
+\definecolor{mimalva}{rgb}{0.58,0,0.99}
+%Estilo para insertar código 
+  \lstset{
+  basicstyle=\normalsize\ttfamily,     
+  numbers=left,               
+  language=c,
+  stepnumber=1,               
+  numbersep=1em,              
+  aboveskip=1em,
+  keepspaces=false,      
+  showstringspaces=false,        
+  belowskip=0.2em,
+  keywordstyle=\ttfamily\color{ForestGreen}\bfseries,
+    stringstyle=\color{RubineRed}, 
+        %identifierstyle=\ttfamily\color{Sepia}\bfseries,
+        commentstyle=\color{NavyBlue},
+        morecomment=[l][\color{Periwinkle}]{\#},
+  backgroundcolor=\color{white},
+  numberstyle=\footnotesize\color{Gray},
+  frame=single,
+  rulecolor=\color{NavyBlue},
+  }
+
+\title{Compiladores \\ Analizador Léxico y Sintáctico \\ Explicación Caso de Estudio}
+
+\author{Prof. Hilda Contreras \\ Grupo Nro. 2 \\ Semestre B-2018}
+\date{}
+
+
+\begin{document}
+% cuerpo del documento
+
+\begin{figure}
+  \centering
+    \includegraphics[width=0.99\textwidth]{logo_computacion}
+\end{figure}
+
+\maketitle
+
+\section{Flex}
+Flex es una herramienta para generar "scanners", o analizadores léxicos. Un scanner a veces llamado "tokenizador", es un programa el cual reconoce patrones léxicos en un texto. El programa generado lee desde un archivo o desde la entrada por defecto para la especificación de un analizador léxico. La descripción de este se encuentra en reglas formadas por pares de expresiones regulares y código en lenguaje \texttt{C}.
+\subsection{Instalación}
+Para sistemas basados en Debian ingrese el siguiente comando en su terminal:
+
+\begin{center}
+	\fcolorbox{Sepia}{white}{\textcolor{Blue}{{\ttfamily \textbf{ usuario@pc:$\sim$\$}}} {\ttfamily sudo aptitude install flex}}
+\end{center}
+
+Verifique que la instalación se realizó con éxito, comprobando la versión de flex
+
+\begin{center}
+	\fcolorbox{Sepia}{white}{\textcolor{Blue}{{\ttfamily \textbf{ usuario@pc:$\sim$\$}}} {\ttfamily flex ---version}}
+\end{center}
+
+\subsection{Estructura de un archivo Flex}
+Un archivo en Flex posee el siguiente formato dividido en tres secciones separadas por un doble caracter porcentaje '\% \%', estas son:
+
+\subsubsection{Sección de definiciones}
+La sección de definiciones contiene declaraciones de "nombres” los cuales son identificadores para expresiones regulares y también para las declaraciones de condiciones. Se pueden incluir en esta sección archivos cabeceras y prototipos de funciones a ser usados en el analizador léxico.
+\subsubsection{Sección de reglas}
+La Sección de reglas contiene propiamente reglas de la forma:
+\begin{center}
+\textcolor{Blue}{{\ttfamily \textbf{Patrón}}} {\ttfamily Acción}
+\end{center}
+\subsubsection{Sección de código de usuario}
+En esta sección se debe colocar todo el código en \texttt{C} que el usuario desee colocar como pueden ser: una función \texttt{main}, o definición de subrutinas.
+
+\section{Bison}
+Bison es un generador de analizadores sintácticos de propósito general que convierte una descripción gramatical para una gramática independiente del contexto \texttt{LALR} en un programa en \texttt{C} que analice esa gramática. 
+
+\subsection{Instalación}
+Para sistemas basados en Debian ingrese el siguiente comando en su terminal:
+
+\begin{center}
+	\fcolorbox{Sepia}{white}{\textcolor{Blue}{{\ttfamily \textbf{ usuario@pc:$\sim$\$}}} {\ttfamily sudo aptitude install bison}}
+\end{center}
+
+Verifique que la instalación se realizó con éxito, comprobando la versión de bison
+
+\begin{center}
+	\fcolorbox{Sepia}{white}{\textcolor{Blue}{{\ttfamily \textbf{ usuario@pc:$\sim$\$}}} {\ttfamily bison ---version}}
+\end{center}
+
+\subsection{Etapas en el Uso de Bison}
+El proceso real de diseño de lenguajes utilizando Bison, desde la especificación de la gramática hasta llegar a un compilador o intérprete funcional, se compone de estas etapas:
+	\begin{enumerate}
+	\item Especificar formalmente la gramática en un formato que reconozca Bison. Para cada regla gramatical en el lenguaje, describir la acción que se va a tomar cuando una instancia de esa regla sea reconocida. La acción se describe por una secuencia de sentencias en \texttt{C}.
+	\item Escribir un analizador léxico para procesar la entrada y pasar tokens al analizador sintáctico. El analizador léxico podría escribirse a mano en \texttt{C} o puede generarse utilizando \texttt{Flex}
+	\item Escibir una función de control que llame al analizador producido por Bison.
+	\item Escribir las rutinas de infome de errores.
+	\end{enumerate}
+Para hacer que este código fuente escrito se convierta en un programa ejecutable, debe seguir estos pasos:
+	\begin{enumerate}
+	\item Ejecutar Bison sobre la gramática para producir el analizador.
+	\item Compilar el código de salida de Bison, al igual que cualquier otro fichero fuente.
+	\item Enlazar los ficheros objeto para producir el producto final.
+	\end{enumerate}
+	
+\subsection{Formato de una Gramática de Bison}
+El fichero de entrada para la utilidad Bison es un archivo de gramática de Bison. La forma general de una gramática de Bison es la siguiente:
+
+{\ttfamily
+\%$\lbrace$
+\linebreak
+declaraciones en C
+\linebreak
+\%$\rbrace$
+\linebreak
+Declaraciones de Bison
+\linebreak
+\%\%
+\linebreak
+Reglas gramaticales
+\linebreak
+\%\%
+\linebreak
+Código C adicional
+\linebreak
+}
+
+Las declaraciones en \texttt{C} podrían definir tipos y variables utilizadas en las acciones. Puede también usar comandos del preprocesador para definir macros que se utilicen ahí, y utilizar \texttt{\#include} para incluir archivos de cabecera que realicen cualquiera de estas cosas.
+
+Las declaraciones de Bison declaran los nombres de los símbolos terminales y no terminales, y también podrían describir la precedencia de operadores y los tipos de datos de los valores semánticos de varios símbolos.
+
+Las reglas gramaticales definen cómo construir cada símbolo no terminal a partir de sus partes.
+
+El código \texttt{C} adicional puede contener cualquier código que desee utilizar. A menudo suele ir la definición del analizador léxico yylex, más subrutinas invocadas por las acciones en la reglas gramaticales. En un programa simple, todo el resto del programa puede ir aquí.
+
+\section{Caso de Estudio}
+Se plantea realizar un analizador léxico y sintáctico que reciba como entrada un archivo con código fuente y determine, según ciertas reglas, si este posee errores sintácticos. La salida generada en caso de error, será dado por el patrón:
+\begin{center}
+{\ttfamily \textbf{Error en la línea [Nro. de línea]:}} {\ttfamily [Indicación del error]}
+\end{center}
+\subsection{Estructura del caso de estudio}
+La codificación del caso de estudio se estructuro en los siguientes archivos, los cuales se procederán a explicar según su grado de importancia para el resultado:
+	\begin{figure}[h]
+	\centering
+	\includegraphics[width=0.25\textwidth]{estructura}
+	\label{estructura}
+	\end{figure}
+	
+\subsubsection{analizador.l}
+Es un archivo de \texttt{Flex}, divido en tres secciones separadas por '\% \%'. En la parte superior del código se incluyen las bibliotecas necesarias para el \texttt{main}. Seguidamente se define la segunda sección que contienes las expresiones regulares que servirán para identificar elementos del lenguaje \texttt{C}, por ejemplo \texttt{letra [a-zA-Z\_]} que indica el emparejamiento cualquier letra minúscula o mayúscula de la \textbf{A} a la \textbf{Z}. Y por último la sección de las reglas que seguirá el analizador léxico, dónde cada \texttt{Patrón} puede usar las definiciones de las restricciones de las \texttt{Acciones} (fragmentos de código de expresiones básicas, caracteres o símbolos de \texttt{C}).
+\begin{lstlisting}
+%{
+#include <stdio.h>
+#include <stdlib.h>
+#include "analizador.tab.h"
+int lineas=0;
+%}
+
+/* Definimos las expresiones regulares que serviran 
+ * para identificar elementos del lenguaje C */	
+
+letra [a-zA-Z_]
+DIGITO [0-9]
+ID ([a-zA-Z]|"_")([a-zA-Z0-9]|"_")*
+TIPOSDATO "char"|"int"|"long"|"short"|"float"|"double"|"void" 
+OPRELACION "<"|">"|">="|"<="|"!="|"=="
+OPINCREMENTO "+"|"-"|"*"|"/"
+OPINCREMENTO2 "++"|"--"
+OPINCREMENTO3 "-="|"+="|"*="|"/="
+OPLOG "&&"|"||"
+%%
+
+"else" {yylval.valor = strdup(yytext); return(T_ELSE);}
+"switch" {yylval.valor = strdup(yytext); return(T_SWITCH);}
+"case" {yylval.valor = strdup(yytext); return(T_CASE);}
+"for" {yylval.valor = strdup(yytext); return(T_FOR);}
+"while" {yylval.valor = strdup(yytext); return(T_WHILE);}
+"do" {yylval.valor = strdup(yytext); return(T_DO);}
+"if" {yylval.valor = strdup(yytext); return(T_IF);}
+"return" {yylval.valor = strdup(yytext); return(T_RETURN);}
+"break" {yylval.valor = strdup(yytext); return(T_BREAK);}
+"struct" {yylval.valor = strdup(yytext); return(T_STRUCT);}
+{DIGITO}+{yylval.valor = strdup(yytext); return(T_INT);}
+{DIGITO}+"."{DIGITO}+{yylval.valor = strdup(yytext); return(T_FLOAT);}
+"'"{letra}"'"{yylval.valor = strdup(yytext); return(T_CAR);}
+"\""{letra}"\""{yylval.valor = strdup(yytext); return(T_CHAR);}
+{TIPOSDATO} {yylval.valor = strdup(yytext); return(T_TDATO);}
+{ID} {yylval.valor = strdup(yytext); return(T_ID);}
+{OPINCREMENTO} {yylval.valor = strdup(yytext); return(T_INCR);}
+{OPINCREMENTO3} {yylval.valor = strdup(yytext); return(T_OPAARIT);}
+{OPINCREMENTO2} {yylval.valor = strdup(yytext); return(T_INCR2);}
+{OPRELACION} {yylval.valor = strdup(yytext); return(T_OPRELACION);}
+{OPLOG} {yylval.valor = strdup(yytext); return(T_ANDOR);}
+";" {yylval.valor = strdup(yytext); return(T_PTCOM);}
+"," {yylval.valor = strdup(yytext); return(T_COMA);}
+":" {yylval.valor = strdup(yytext); return(T_DOSPTO);}
+"=" {yylval.valor = strdup(yytext); return(T_OPASIG);}
+"(" {yylval.valor = strdup(yytext); return(T_PA);}
+")" {yylval.valor = strdup(yytext); return(T_PC);}
+"{" {yylval.valor = strdup(yytext); return(T_CA);}
+"}" {yylval.valor = strdup(yytext); return(T_CC);}
+\n 	++lineas;
+.   {}
+%%
+\end{lstlisting}
+
+\subsubsection{analizador.y}
+Es un archivo de fuente \texttt{Bison},  el cual se divide en tres secciones principales que igualmente están separadas por ’ \% \%’.  (código analizador.y)
+
+\begin{enumerate}
+\item[1.] Declaraciones: Se declaran todas las variables y librerias a utilizar en el programa, declaraciones necesarias para \texttt{Bison} y para C, se declaran los terminales y no terminales de la gramatica, ademas de los tokken que se reciben desde el analizador léxico.
+\end{enumerate} 
+\begin{lstlisting}
+%{
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <math.h>
+extern int yylex(void);
+extern char *yytext;
+extern int lineas;
+extern FILE * yyin;
+FILE * fsalidaRep;
+FILE * fsalidaSel;
+FILE * fsalidaFun;
+FILE * fsalidaStru;
+void yyerror(char *s);
+%}
+
+%union
+{
+char *valor;
+}
+
+%token <valor> T_ID T_INT T_FLOAT T_IF T_ELSE T_SWITCH T_CASE T_FOR \\
+ T_WHILE T_DO T_TDATO T_OPAARIT T_INCR2 T_COMA T_PTCOM T_OPRELACION \\
+ T_OPASIG T_PA T_PC T_CA T_CC T_INCR T_ANDOR T_CHAR T_RETURN \\
+ T_STRUCT T_DOSPTO T_BREAK T_CAR
+%type <valor> argumentos
+%type <valor> declaracion
+%type <valor> id
+%type <valor> conte
+%type <valor> return
+%type <valor> asignaciones
+%type <valor> operArit
+%type <valor> valores
+%type <valor> cases
+%type <valor> case
+%type <valor> constantes
+%start funciones
+%%
+\end{lstlisting}
+\begin{enumerate}
+\item[2.]Reglas Gramaticales: Se declaran las definiciones de las diferentes reglas gramaticales que componen la sintaxis del programa, definiendo un orden para los tokken (terminales o no terminales)  dependiendo de cada una de las reglas. Estas son de la forma: 
+\end{enumerate}
+\begin{center}
+{\ttfamily \textbf{(regla): (producción) | (producción) … }}
+\end{center}
+\begin{lstlisting}
+valores: T_INT {$$=$1;}|
+         T_FLOAT {$$=$1;}|
+         T_ID {$$=$1;};
+
+\end{lstlisting}
+
+Para este caso la regla contiene no terminales; números de tipo entero, flotante o variables declaradas,  dentro del bloque de \{\} se ejecutan acciones para validar o asignar los valores correspondientes del tokken; a través del operador '\$\$' y '\$n' donde n es el numero de posición del elemento al cual se quiere acceder en la producción.\\
+
+Cada definición como ya vimos puede tener mas de una producción asociada, separando cara una con el carácter "|" pero ademas de esto como producciones se pueden definir recuperación a errores de sintaxis comunes, las cuales simplemente se agregan como producciones “erradas” a la definición, como por ejemplo: 
+
+\begin{lstlisting}
+declaracion: T_TDATO id T_PTCOM	{strcat($1," ");strcat($1,$2);$$=$1;}|
+             T_TDATO id T_PTCOM declaracion	{strcat($1," "); \\
+             strcat($1,$2);strcat($1,", ");strcat($1,$4);$$=$1;}|
+/*Excepciones declaraciones*/
+         T_TDATO id {printf (" Error en linea %d: Te falto poner el ;  en la declaracion. \n", lineas-1);}             
+\end{lstlisting}
+
+\begin{enumerate}
+\item[3.]Código de usuario: en esta ultima sección, se escribe todo el código adicional o funciones que requiera el analizador, en este caso se valida dentro de la función \texttt{main} que los parámetros de al momento de compilar estén completos, y se abren los archivos donde se guarda la información de la compilación.
+\end{enumerate}
+\begin{lstlisting}
+int main( int argc, char **argv )
+{
+	if (argc>1){	
+	   yyin = fopen(argv[1], "r");
+	   fsalidaRep = fopen("Estructura Repetitiva.txt","w");
+	   fsalidaSel = fopen("Estructura Selectiva.txt","w");
+  	   fsalidaFun = fopen("Funciones.txt","w");
+	   fsalidaStru = fopen("Structs.txt","w");
+	}else{
+	  printf("Forma de uso: ./analizador archivo_entrada\n");
+	  return 0;
+	}
+	yyparse();
+
+	return 0;
+}
+\end{lstlisting}
+\subsubsection{Ejemplo del Analizador sintáctico}
+Ahora les vamos a enseñar como compilar nuestro analizador sintactico y les vamos a mostrar varios ejemplos para que vean su funcionamiento.\\
+Primero vamos a ejecutar el comando make, Al ejecutar este comando automaticamente se van a generar nuevos archvios con flex se genera lex.yy.c,  este es el primer archivo luego se van a generear las librerias que serian analizador.tab.c y analizador.tab.h esto es con bison y tambien se va a generar nuestro ejecutable el cual se llama analizador, para usar nuestro analizador tenemos que escribir en la consola \texttt{./analizador y nuestro arvhivo de entrada.}\\ 
+el primer archivo de entrada que se va a cargar es ejemplo.c\\\\
+\begin{lstlisting}
+int main(){
+
+	int x, y;
+
+	int p;
+
+	x= 5+7;
+	x= 0;
+	y = 9;
+
+
+	struct n
+	{
+		int a;
+		float b;
+		char c;
+	};
+
+
+	switch(v)
+	{
+		case 5: x = 0; v++; break;
+		case 'a': x = 0; v++; break;
+	}
+
+
+	if (x>0)
+	{
+		for (y=1; y<6;y++)
+		{
+			x++;
+		}
+	}
+
+	else
+	{
+		y=6;
+		while(y>0){
+		x++;
+		y--;
+		}
+	}
+
+	for (y=1; y<6;y++)
+	{
+		for (y=1; y<6;y++)
+		{
+			x++;
+		}
+	}	
+
+
+	if (x>0)
+	{
+		for (y=1; y<6;y++)
+		{
+			x++;
+		}
+	}
+
+return (0);
+}
+
+int funcion(int i, float f)
+{
+	i=0;
+	f=i+1;
+
+struct nuevaEstructura
+{
+		int aX;
+		float flotante;
+		char ccar;
+};
+
+return (9);
+}
+
+void nulo()
+{
+	do
+	{
+		x = x-1;
+	}while(x > 0);
+}
+
+\end{lstlisting}
+ejemplo.c compilo perfectamente esto quiere decir que no tiene ningun error sintactico, como pueden observar se generaron nuevos archivos .txt:structura repetitiva, estructura selectiva, funciones y strings.\\
+Esos archivos.txt contienen una breve descripcion del archivo.c\\
+posteriormente se agregaron varios errores al codigo para mostrar como funciona el analizador sintactico,  asi poder demostrar como funciona la recuperacion de errores con las producciones que se colocaron en el analizador.h
+\begin{lstlisting}
+int main()
+{
+
+	int x, y;
+
+	int p
+
+	x= 5+7;
+	x= 0;
+ 	= 9;
+
+
+	struct n
+	{
+		int a;
+		float b;
+		char c;
+	};
+
+
+	switch(v)
+	{
+		case 5: x = 0; v++; break;
+		case 'a': x = 0; v++; break;
+	}
+
+
+	if (x>0)
+	{
+		for (y=1; y<6;y++)
+		{
+			x++;
+		}
+
+
+	else
+	{
+		y=6;
+		while(y>0)
+		{
+			x++;
+			y--;
+		}
+	}
+
+	for (y=1; y<6;y++)
+	{
+		for (y=1; y<6;y++)
+		{
+			x++;
+		}
+	}	
+
+
+	if (x>0)
+	{
+		for (y=1; y<6;y++)
+		{
+			x++;
+		}
+	}
+
+return (0);
+}
+
+int funcion(int i, float f)
+{
+	i=0;
+	f=i+1;
+
+struct nuevaEstructura
+{
+	int aX;
+	float flotante;
+	char ccar;
+};
+
+return (9);
+}
+
+void nulo()
+{
+	do
+	{
+		x = x-1;
+	}while(x > 0);
+}
+
+\end{lstlisting}
+
+Al compilar y ejectuar el codigo apareceran errores en las lineas 5,9 y 51 lo cual indica que nuestra recuperacion de errores esta funcionando porque no se esta cortando la compilacion del programa y esta mostrando los errores, despues de corregir los errores volvemos a compilar y efectivamente compila sin problemas.\\
+
+Ahora vamos a usar otro ejemplo, en este caso sera \texttt{funcion\_prueba.c}\\
+\begin{lstlisting}
+	int main()
+	{
+		int x, y, z, cont
+		
+		x = 0;
+		= 0;
+		
+		
+		for (cont = 1; cont <= 20; cont = cont+1)
+		
+			z = x+y;
+			x = y;
+			y = z;
+		}
+	return (0);
+}
+\end{lstlisting}
+Esta funcion ya tiene varios errores, pasamos a compilar para que los reconozca, y efectivamente el analizador muestra los errores en la linea 3, 6 y 10.\\ luego de corregir estos errores.\\
+\begin{lstlisting}
+int main(){
+
+	int x, y, z, cont;
+
+	x = 0;
+	y = 0;
+
+
+	for (cont = 1; cont <= 20; cont = cont+1)
+	{
+
+		z = x+y;
+		x = y;
+		y = z;
+	}
+return (0);
+}
+\end{lstlisting}
+se vuelve a compilar y el  archivo funciona sin problemas. Esto fue todo nuestro analizador sintactico, esperamos que les haya gustado
+
+\renewcommand{\refname}{ \begin{center}\normalsize \textbf{Referencias} \end{center}}
+\begin{thebibliography}{0}
+
+  \bibitem{slideshare} Campues (2019). Investigacion Flex Y Bison. Es.slideshare.net. Tomado de: https:\///es.slideshare.net\//jvalexander\//investigacion-flex-y-bison.
+  \bibitem{bison} Es.tldp.org. (2019). Bison 1.27. Tomado de: http:\///es.tldp.org\//Manuales-LuCAS\//BISON\//bison-es-1.27.html.
+  \bibitem{instalacion} CCM. (2019). How To Install Flex and Bison Under Ubuntu. Tomado de: https:\///ccm.net\//faq\//30635-how-to-install-flex-and-bison-under-ubuntu.
+  
+\end{thebibliography}	
+
+\end{document}
